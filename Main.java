@@ -13,6 +13,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Polygon;
+import javafx.scene.text.Text;
 
 
 public class Main extends Application {
@@ -20,15 +21,25 @@ public class Main extends Application {
 	public void start(Stage primaryStage) {
 		try {
 			Group root = new Group();
-			Scene scene = new Scene(root,400,400);
+			Scene scene = new Scene(root,1024,768);
 			
 			//The first boid prototype. 
 			// TODO create a class for boids that implements boidal behaviour
-			Polygon boid = new Polygon(50, 50, 60, 25, 70, 50, 60, 44);
-			Point2D boidDirection= new Point2D(0, -1); //currently not used. Will represent the direction of the boid.
+			// Flock boid shape(0, 25, 10, 0, 20, 25, 10, 19);
 			double boidSpeed = 5; //Represents the speed of each boid. I am planning on creating boids that can move faster to intercept others.
 			
-			ArrayList<KeyCode> keys = new ArrayList<KeyCode>();
+			ArrayList<Boid2D> boids = new ArrayList<Boid2D>(); //arraylist of all boids currently alive.
+			ArrayList<KeyCode> keys = new ArrayList<KeyCode>();//array list of keys that are currently pressed.
+			
+			for(int i = 0; i < 1; i++)
+			{
+				boids.add(new Boid2D(new Polygon(-10, 13, 0, -12, 10, 13, 0, 7), Math.random() * 360, 5, 5, 3, 10, Math.random() * scene.getWidth(), Math.random() * scene.getHeight(), BoidType.Flock));
+			}
+			
+			for(Boid2D boid : boids)
+			{
+				root.getChildren().add(boid.getShape());
+			}
 			
 			scene.setOnKeyPressed(new EventHandler<KeyEvent>() 
 			{
@@ -53,13 +64,17 @@ public class Main extends Application {
 					//System.out.println(event.getCode());
 					if(event.getCode() == KeyCode.X)
 					{
-						boid.setVisible(!boid.isVisible());
+						for(Boid2D boid : boids)
+						{
+							boid.getShape().setVisible(!boid.getShape().isVisible());
+						}
 					}
 				}
 			});
 			
-			root.getChildren().add(boid);
+			Text mode = new Text();
 			
+			root.getChildren().add(mode);
 			primaryStage.setScene(scene);
 			primaryStage.show();
 			
@@ -68,29 +83,46 @@ public class Main extends Application {
 
 				@Override
 				public void handle(long arg0) {
-					for(KeyCode state : keys)
+					for(Boid2D boid : boids)
 					{
-						//System.out.println(keys);
-						if(state == KeyCode.A)
+//						for(KeyCode state : keys)
+//						{
+//							if(state == KeyCode.A)
+//							{
+//								boid.setRotation(270);
+//							}
+//							if(state == KeyCode.W)
+//							{
+//								boid.setRotation(0);
+//							}
+//							if(state == KeyCode.D)
+//							{
+//								boid.setRotation(90);
+//							}
+//							if(state == KeyCode.S)
+//							{
+//								boid.setRotation(180);
+//							}
+//						}
+						//boid.calculateMove(boids);
+						boid.move();
+						if(boid.getShape().getTranslateX() > scene.getWidth())
 						{
-							boid.setRotate((boid.getRotate() - 5) % 360);
+							boid.getShape().setTranslateX(0);
 						}
-						if(state == KeyCode.W)
+						if(boid.getShape().getTranslateX() < 0)
 						{
-							boid.setTranslateX(boid.getTranslateX() + Math.sin(Math.toRadians(boid.getRotate())) * boidSpeed);
-							boid.setTranslateY(boid.getTranslateY() - Math.cos(Math.toRadians(boid.getRotate())) * boidSpeed);
+							boid.getShape().setTranslateX(scene.getWidth());
 						}
-						if(state == KeyCode.D)
+						if(boid.getShape().getTranslateY() > scene.getHeight())
 						{
-							boid.setRotate((boid.getRotate() + 5) % 360);
+							boid.getShape().setTranslateY(0);
 						}
-						if(state == KeyCode.S)
+						if(boid.getShape().getTranslateY() < 0)
 						{
-							boid.setTranslateX(boid.getTranslateX() - Math.sin(Math.toRadians(boid.getRotate())) * boidSpeed);
-							boid.setTranslateY(boid.getTranslateY() + Math.cos(Math.toRadians(boid.getRotate())) * boidSpeed);
+							boid.getShape().setTranslateY(scene.getHeight());
 						}
 					}
-					System.out.println(boid.getRotate());					
 				}
 				
 			}.start();
