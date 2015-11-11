@@ -163,11 +163,14 @@ public class Main extends Application {
 						//implement a wandering behavior.
 						else
 						{
-//							Point2D circleCenter = new Point2D(Math.sin(Math.toRadians(boid.getRotation())),
-//														   -Math.cos(Math.toRadians(boid.getRotation())));
-//							circleCenter = circleCenter.multiply(2);
-//							System.out.print(circleCenter);
-//							System.out.println(circleCenter.magnitude());
+							double ANGLE_CHANGE = 5.0;
+							Point2D circleCenter = new Point2D(Math.sin(Math.toRadians(boid.getRotation())),
+														   -Math.cos(Math.toRadians(boid.getRotation())));
+							circleCenter = circleCenter.multiply(2);
+							Point2D displacement = new Point2D(0, 1);
+							displacement = displacement.multiply(1);
+							
+							
 							
 						}
 						
