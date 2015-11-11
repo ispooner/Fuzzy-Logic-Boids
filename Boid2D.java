@@ -44,16 +44,15 @@ public class Boid2D{
 	}
 	
 	//changes the rotation by rotationChange
-	public void setRotation(double rotationChange)
+	public void setRotation(double newRotation)
 	{
-		//I expect rotationChange to be how far and in what direction the boid wishes to go.
-		shape.setRotate((shape.getRotate() + Math.max(-maxRotate, Math.min(maxRotate, rotationChange))) % 360);
-		
-		if(shape.getRotate() < 0)
-		{
-			shape.setRotate(shape.getRotate() + 360);
-		}
+		shape.setRotate(newRotation);
 		//System.out.println(shape.getRotate());
+	}
+	
+	public void setDirection(Point2D direction)
+	{
+		setRotation(Math.toDegrees(Math.atan2(direction.getX(), -direction.getY())));
 	}
 	
 	//sets the speed of the boid between two values.
@@ -81,6 +80,7 @@ public class Boid2D{
 	{
 		shape.setTranslateX(shape.getTranslateX() + Math.sin(Math.toRadians(shape.getRotate())) * speed);
 		shape.setTranslateY(shape.getTranslateY() - Math.cos(Math.toRadians(shape.getRotate())) * speed);
+		
 	}
 	
 	public void calculateMove(ArrayList<Boid2D> boids)

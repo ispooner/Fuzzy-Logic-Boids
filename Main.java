@@ -11,12 +11,18 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
 
 
 public class Main extends Application {
+
+	Boolean mouseLeft = false;
+	Boolean mouseRight = false;
+	Point2D target = Point2D.ZERO;
+	
 	@Override
 	public void start(Stage primaryStage) {
 		try {
@@ -24,9 +30,7 @@ public class Main extends Application {
 			Scene scene = new Scene(root,1024,768);
 			
 			//The first boid prototype. 
-			// TODO create a class for boids that implements boidal behaviour
-			// Flock boid shape(0, 25, 10, 0, 20, 25, 10, 19);
-			double boidSpeed = 5; //Represents the speed of each boid. I am planning on creating boids that can move faster to intercept others.
+			// Flock boid shape(-10, 13, 0, -12, 10, 13, 0, 7);
 			
 			ArrayList<Boid2D> boids = new ArrayList<Boid2D>(); //arraylist of all boids currently alive.
 			ArrayList<KeyCode> keys = new ArrayList<KeyCode>();//array list of keys that are currently pressed.
@@ -71,6 +75,36 @@ public class Main extends Application {
 					}
 				}
 			});
+						
+			scene.setOnMousePressed(new EventHandler<MouseEvent>()
+			{
+				@Override
+				public void handle(MouseEvent arg0) 
+				{
+					target = new Point2D(arg0.getSceneX(), arg0.getSceneY());
+					setLeft(arg0.isPrimaryButtonDown());
+					setRight(arg0.isSecondaryButtonDown());
+				}
+			});
+			
+			scene.setOnMouseDragged(new EventHandler<MouseEvent>()
+			{
+				@Override
+				public void handle(MouseEvent event)
+				{
+					target = new Point2D(event.getSceneX(), event.getSceneY());
+				}
+			});
+			
+			scene.setOnMouseReleased(new EventHandler<MouseEvent>()
+			{
+				@Override
+				public void handle(MouseEvent event)
+				{
+					setLeft(event.isPrimaryButtonDown());
+					setRight(event.isSecondaryButtonDown());
+				}
+			});
 			
 			Text mode = new Text();
 			
@@ -85,25 +119,7 @@ public class Main extends Application {
 				public void handle(long arg0) {
 					for(Boid2D boid : boids)
 					{
-//						for(KeyCode state : keys)
-//						{
-//							if(state == KeyCode.A)
-//							{
-//								boid.setRotation(270);
-//							}
-//							if(state == KeyCode.W)
-//							{
-//								boid.setRotation(0);
-//							}
-//							if(state == KeyCode.D)
-//							{
-//								boid.setRotation(90);
-//							}
-//							if(state == KeyCode.S)
-//							{
-//								boid.setRotation(180);
-//							}
-//						}
+						
 						//boid.calculateMove(boids);
 						boid.move();
 						if(boid.getShape().getTranslateX() > scene.getWidth())
@@ -122,6 +138,39 @@ public class Main extends Application {
 						{
 							boid.getShape().setTranslateY(scene.getHeight());
 						}
+						
+						Point2D currentVelocity = new Point2D(Math.sin(Math.toRadians(boid.getRotation())) * boid.getSpeed(),
+														   -Math.cos(Math.toRadians(boid.getRotation())) * boid.getSpeed());
+						double maxForce = 10;
+						//implement a seek steering behavior
+						if(mouseLeft)
+						{
+							Point2D desiredVelocity = new Point2D(target.getX() - boid.getShape().getTranslateX(), target.getY() - boid.getShape().getTranslateY());
+							desiredVelocity = desiredVelocity.normalize().multiply(boid.getSpeed());
+							
+							Point2D steeringForce = desiredVelocity.subtract(currentVelocity);
+							
+							steeringForce = steeringForce.multiply(1/maxForce);
+							
+							
+							boid.setDirection(currentVelocity.add(steeringForce));
+						}
+						//implement a flee steering behavior.
+						else if(mouseRight)
+						{
+							
+						}
+						//implement a wandering behavior.
+						else
+						{
+//							Point2D circleCenter = new Point2D(Math.sin(Math.toRadians(boid.getRotation())),
+//														   -Math.cos(Math.toRadians(boid.getRotation())));
+//							circleCenter = circleCenter.multiply(2);
+//							System.out.print(circleCenter);
+//							System.out.println(circleCenter.magnitude());
+							
+						}
+						
 					}
 				}
 				
@@ -133,5 +182,15 @@ public class Main extends Application {
 	
 	public static void main(String[] args) {
 		launch(args);
+	}
+	
+	public void setLeft(Boolean b)
+	{
+		mouseLeft = b;
+	}
+	
+	public void setRight(Boolean b)
+	{
+		mouseRight = b;
 	}
 }
