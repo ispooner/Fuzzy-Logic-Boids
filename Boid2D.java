@@ -85,6 +85,29 @@ public class Boid2D{
 	
 	public void calculateMove(ArrayList<Boid2D> boids)
 	{
+		ArrayList<Double> angles = new ArrayList<Double>();
+		Double[] a = new Double[0];
+		for(Boid2D boid : boids)
+		{
+			angles.add(boid.getRotation());
+		}
 		
+		double steer = averageAngles(angles.toArray(a)) - getRotation();
+		
+		steer *= .1;
+		
+		setRotation(getRotation() + steer);	
+	}
+	
+	public double averageAngles(Double[] angles)
+	{
+		double x = 0, y = 0;
+		for(int i = 0; i < angles.length; i++)
+		{
+			x += Math.cos(Math.toRadians(angles[i]));
+			y += Math.sin(Math.toRadians(angles[i]));
+		}
+		
+		return Math.toDegrees(Math.atan2(y, x));
 	}
 }
