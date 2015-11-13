@@ -20,7 +20,7 @@ public class Boid2D{
 	private double maxSpeed;	//The maximum speed of this boid.
 	private double minSpeed;	//The minimum speed of this boid.
 
-	private final double maxForce = 3.0; 	//This value is used to determine how much effect the total forces have on the boid.
+	private final double maxForce = 1.5; 	//This value is used to determine how much effect the total forces have on the boid.
 											//This value may be split up so that each force may have a different "weight"
 	
 	private Point2D bounds;		//The bounding frame. Used to wrap the boids back onto the screen Asteroids style.
@@ -29,6 +29,7 @@ public class Boid2D{
 	private Point2D seekForce;	//The current seek force for this boid. It will seek the center of mass of the boids around it.
 	private Point2D fleeForce;	//The current flee force. It will flee from predators.(May change to evade force later.)
 	private Point2D avoidForce;	//The current avoid force. Used to avoid Obstacle boids.
+	private Point2D directionForce; //The current force directing the boids to move in the same direction.
 	
 	//The random wander force of each boid. This will likely be the only random force directly acting on the boids.
 	private Point2D wanderForce;
@@ -65,6 +66,10 @@ public class Boid2D{
 	public void setVelocity(Point2D v)
 	{
 		//I am checking to make sure that the boid will continue to move within the speed limits.
+		if(v.magnitude() == 0)
+		{
+			//v = new Point2D(0, 1);
+		}
 		if(v.magnitude() < minSpeed)
 		{
 			v = v.normalize().multiply(minSpeed);
@@ -111,6 +116,7 @@ public class Boid2D{
 		fleeForce = Point2D.ZERO;
 		avoidForce = Point2D.ZERO;
 		wanderForce = Point2D.ZERO;
+		directionForce = Point2D.ZERO;
 		wanderAngle = velocity.angle(0, 1); //I set the wanderAngle to the angle of the velocity so the boid moves straight at first.
 		
 	}
@@ -122,11 +128,9 @@ public class Boid2D{
 	public void move(ArrayList<Boid2D> boids)
 	{
 		Boid2D[] c = closeBoids(boids);
+		
 		steering = Point2D.ZERO;
-		steering = steering.add(seek(c));
-		steering = steering.add(flee(c));
-		steering = steering.add(avoid(c));
-		steering = steering.add(wander());
+		steering = steering.add(seek(c)).add(flee(c)).add(avoid(c)).add(direction(c).multiply(.5)).add(wander());
 		
 		if(steering.magnitude() > maxForce)
 		{
@@ -138,10 +142,29 @@ public class Boid2D{
 		setPosition(getPosition().add(velocity));
 	}
 	
+	/*
+	 * closeBoids calculates the boids that are considered close. This function will become the cornerstone
+	 * of my research since it will use fuzzy logic to measure the "closeness" of the other boids to this boid.
+	 * If this boid is a long ways away from other boids it will become lonely and begin looking further for flock mates. 
+	 * 
+	 * While I implement the other steering behaviors, I'm going to hardcode closeness to 200 units in any 
+	 * direction.
+	 */
 	private Boid2D[] closeBoids(ArrayList<Boid2D> boids)
 	{
+		ArrayList<Boid2D> cl = new ArrayList<Boid2D>();
+		for(Boid2D boid : boids)
+		{
+			if(getPosition().distance(boid.getPosition()) < 200)
+			{
+				cl.add(boid);
+			}
+		}
+		
 		Boid2D[] c = new Boid2D[0];
-		return boids.toArray(c);
+		
+		c = cl.toArray(c);
+		return c;
 	}
 	
 	//Calculates the seekForce for the center of all close boids.
@@ -161,8 +184,23 @@ public class Boid2D{
 	//Calculates the force of avoiding obstacles in the way of the boid.
 	private Point2D avoid(Boid2D[] boids)
 	{
-		
 		return avoidForce;
+	}
+	
+	//Calculates the directional force.
+	private Point2D direction(Boid2D[] boids)
+	{
+		Point2D[] velocities = new Point2D[boids.length];
+		for(int i = 0; i < boids.length; i++)
+		{
+			velocities[i] = boids[i].getVelocity();
+		}
+		
+		Point2D aveVel = averageVelocities(velocities);
+		
+		directionForce = aveVel.subtract(getVelocity());
+		
+		return directionForce;
 	}
 	
 	//Calculates how much the boid will randomly wander this update.
@@ -170,8 +208,8 @@ public class Boid2D{
 	 * This function uses a "circle" in front of the boid represented by vectors to change the velocity of
 	 * the boid over time. 
 	 */
-	private final double circleScale = 2;
-	private final double circleRadius = 1;
+	private final double circleScale = 1;
+	private final double circleRadius = .5;
 	private Point2D wander()
 	{
 		Point2D circleCenter = velocity.normalize().multiply(circleScale);
@@ -179,7 +217,7 @@ public class Boid2D{
 		
 		wanderAngle += ((Math.random() * angleChange) - (angleChange * .5));
 		
-		wanderForce = circleCenter.add(circleDisplacement);
+		wanderForce = circleCenter.add(circleDisplacement.multiply(circleRadius));
 		
 		return wanderForce;
 	}
@@ -196,7 +234,8 @@ public class Boid2D{
 		for(int i = 0; i < velocities.length; i++)
 		{
 			ave = ave.add(velocities[i]);
+			
 		}
-		return ave.multiply(1/velocities.length);
+		return ave.multiply(1.0/(double)velocities.length);
 	}
 }
