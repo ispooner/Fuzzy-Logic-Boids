@@ -23,7 +23,7 @@ public class Boid2D{
 	private final double maxForce = 1.5; 	//This value is used to determine how much effect the total forces have on the boid.
 											//This value may be split up so that each force may have a different "weight"
 	
-	private Point2D bounds;		//The bounding frame. Used to wrap the boids back onto the screen Asteroids style.
+	private static Point2D bounds;		//The bounding frame. Used to wrap the boids back onto the screen Asteroids style.
 	private Point2D velocity;	//The current direction and speed of this boid.
 	private Point2D steering;	//The amount of change added to the velocity on each frame.
 	private Point2D seekForce;	//The current seek force for this boid. It will seek the center of mass of the boids around it.
@@ -127,18 +127,19 @@ public class Boid2D{
 	 */
 	public void move(ArrayList<Boid2D> boids)
 	{
+		System.out.println(boids.size());
 		Boid2D[] c = closeBoids(boids);
 		
 		steering = Point2D.ZERO;
-		steering = steering.add(seek(c)).add(flee(c)).add(avoid(c)).add(direction(c).multiply(.5)).add(wander());
-		
+		steering = steering.add(flee(c).multiply(.8)).add(avoid(c)).add(direction(c)).add(wander());
+		//.add(seek(c))
 		if(steering.magnitude() > maxForce)
 		{
 			steering = steering.normalize().multiply(maxForce);
 		}
 		
 		setVelocity(getVelocity().add(steering));
-		
+		//.normalize().multiply(velocity.magnitude())
 		setPosition(getPosition().add(velocity));
 	}
 	
@@ -163,13 +164,27 @@ public class Boid2D{
 		
 		Boid2D[] c = new Boid2D[0];
 		
+		cl.remove(this);
 		c = cl.toArray(c);
 		return c;
 	}
 	
 	//Calculates the seekForce for the center of all close boids.
+	/*
+	 * This force "pulls" the boids toward the center of mass of all the other nearby boids.
+	 */
 	private Point2D seek(Boid2D[] boids)
 	{
+		Point2D avePos = Point2D.ZERO;
+		for(Boid2D boid : boids)
+		{
+			avePos = avePos.add(boid.getPosition());
+		}
+		avePos = avePos.multiply(1.0/(double)boids.length);
+		
+		avePos = avePos.subtract(getPosition()).normalize().multiply((maxSpeed + minSpeed) / 2);
+		
+		seekForce = avePos.subtract(velocity);
 		
 		return seekForce;
 	}
@@ -177,7 +192,15 @@ public class Boid2D{
 	//Calculates the flee force from predators and boids that are too close.
 	private Point2D flee(Boid2D[] boids)
 	{
+		fleeForce = Point2D.ZERO;
+		for(Boid2D boid : boids)
+		{
+			fleeForce = fleeForce.add(getPosition().subtract(boid.getPosition()).multiply(1.0/getPosition().distance(boid.getPosition())));
+		}
+		fleeForce = fleeForce.normalize().multiply((maxSpeed + minSpeed) / 2);
 		
+		fleeForce = fleeForce.subtract(velocity);
+		System.out.println(fleeForce);
 		return fleeForce;
 	}
 	
@@ -208,8 +231,8 @@ public class Boid2D{
 	 * This function uses a "circle" in front of the boid represented by vectors to change the velocity of
 	 * the boid over time. 
 	 */
-	private final double circleScale = 1;
-	private final double circleRadius = .5;
+	private final double circleScale = 2;
+	private final double circleRadius = 1;
 	private Point2D wander()
 	{
 		Point2D circleCenter = velocity.normalize().multiply(circleScale);
