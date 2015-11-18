@@ -14,6 +14,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
 import javafx.scene.text.Text;
 
@@ -35,7 +36,7 @@ public class Main extends Application {
 			ArrayList<Boid2D> boids = new ArrayList<Boid2D>(); //arraylist of all boids currently alive.
 			ArrayList<KeyCode> keys = new ArrayList<KeyCode>();//array list of keys that are currently pressed.
 			
-			for(int i = 0; i < 60; i++)
+			for(int i = 0; i < 100; i++)
 			{
 				boids.add(new Boid2D(new Polygon(-10, 13, 0, -12, 10, 13, 0, 7), 6.0, 2.0, new Point2D(scene.getWidth(), scene.getHeight()),
 						new Point2D(Math.random() * 5 - 2.5, Math.random() * 5 - 2.5), new Point2D(Math.random() * scene.getWidth(), Math.random() * scene.getHeight()),

@@ -20,7 +20,7 @@ public class Boid2D{
 	private double maxSpeed;	//The maximum speed of this boid.
 	private double minSpeed;	//The minimum speed of this boid.
 
-	private final double maxForce = 1.5; 	//This value is used to determine how much effect the total forces have on the boid.
+	private final double maxForce = 0.5; 	//This value is used to determine how much effect the total forces have on the boid.
 											//This value may be split up so that each force may have a different "weight"
 	
 	private static Point2D bounds;		//The bounding frame. Used to wrap the boids back onto the screen Asteroids style.
@@ -62,6 +62,11 @@ public class Boid2D{
 		return new Point2D(shape.getTranslateX(), shape.getTranslateY());
 	}
 	
+	private Point2D getSteering()
+	{
+		return steering;
+	}
+	
 	//Setters for variables.
 	public void setVelocity(Point2D v)
 	{
@@ -99,6 +104,21 @@ public class Boid2D{
 		}
 	}
 	
+	private void setSteering(Point2D s)
+	{
+		if(Double.isNaN(s.getX()))
+		{
+			try {
+				throw(new IllegalArgumentException());
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.exit(0);
+			}
+		}
+		steering = s;
+	}
+	
 	//Initialize this boids values to the given parameters
 	public Boid2D(Shape s, double maxS, double minS, Point2D b, Point2D v, Point2D p, BoidType t, Paint c)
 	{
@@ -127,20 +147,27 @@ public class Boid2D{
 	 */
 	public void move(ArrayList<Boid2D> boids)
 	{
-		System.out.println(boids.size());
+		switch(type)
+		{
+		case Flock:
+		}
+		//System.out.println(boids.size());
 		Boid2D[] c = closeBoids(boids);
 		
-		steering = Point2D.ZERO;
-		steering = steering.add(flee(c).multiply(.8)).add(avoid(c)).add(direction(c)).add(wander());
-		//.add(seek(c))
-		if(steering.magnitude() > maxForce)
+		setSteering(Point2D.ZERO);
+		setSteering(getSteering().add(flee(c).multiply(.7)).add(seek(c).multiply(.7)).add(direction(c).multiply(.1)).add(wander().multiply(.3)));
+		//.add(avoid(c))
+		if(getSteering().magnitude() > maxForce)
 		{
-			steering = steering.normalize().multiply(maxForce);
+			setSteering(getSteering().normalize().multiply(maxForce));
 		}
 		
+		//System.out.println("Steering: " + steering);
+		
 		setVelocity(getVelocity().add(steering));
-		//.normalize().multiply(velocity.magnitude())
+		//
 		setPosition(getPosition().add(velocity));
+		//System.out.println();
 	}
 	
 	/*
@@ -180,7 +207,8 @@ public class Boid2D{
 		{
 			avePos = avePos.add(boid.getPosition());
 		}
-		avePos = avePos.multiply(1.0/(double)boids.length);
+		if(boids.length != 0)
+			avePos = avePos.multiply(1.0/(double)boids.length);
 		
 		avePos = avePos.subtract(getPosition()).normalize().multiply((maxSpeed + minSpeed) / 2);
 		
@@ -193,14 +221,14 @@ public class Boid2D{
 	private Point2D flee(Boid2D[] boids)
 	{
 		fleeForce = Point2D.ZERO;
+		
 		for(Boid2D boid : boids)
 		{
 			fleeForce = fleeForce.add(getPosition().subtract(boid.getPosition()).multiply(1.0/getPosition().distance(boid.getPosition())));
 		}
+		//
 		fleeForce = fleeForce.normalize().multiply((maxSpeed + minSpeed) / 2);
-		
 		fleeForce = fleeForce.subtract(velocity);
-		System.out.println(fleeForce);
 		return fleeForce;
 	}
 	
@@ -219,9 +247,9 @@ public class Boid2D{
 			velocities[i] = boids[i].getVelocity();
 		}
 		
-		Point2D aveVel = averageVelocities(velocities);
+		directionForce = averageVelocities(velocities);
 		
-		directionForce = aveVel.subtract(getVelocity());
+		directionForce = directionForce.subtract(getVelocity()).normalize().multiply((maxSpeed + minSpeed) / 2);
 		
 		return directionForce;
 	}
@@ -253,12 +281,15 @@ public class Boid2D{
 	 */
 	public Point2D averageVelocities(Point2D[] velocities)
 	{
+		if(velocities.length == 0)
+			return Point2D.ZERO;
 		Point2D ave = Point2D.ZERO;
 		for(int i = 0; i < velocities.length; i++)
 		{
 			ave = ave.add(velocities[i]);
 			
 		}
-		return ave.multiply(1.0/(double)velocities.length);
+		ave = ave.multiply(1.0/(double)velocities.length);
+		return ave;
 	}
 }
